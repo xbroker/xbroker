@@ -2,7 +2,7 @@
 
 'use strict';
 
-var xbrokerBroker = require('../dist'),
+var xbroker = require('../dist'),
     colors     = require('colors/safe'),
     fs         = require('fs'),
     os         = require('os'),
@@ -39,6 +39,7 @@ var file = argv.f || argv.file,
     batchMs = argv.b || argv.batchMs || 100,
     debug = argv.d || argv.debug || false,
     verbose = argv.v || argv.verbose || false,
+    utc = argv.U || argv.utc || false,
     logger;
 
 if (!argv.s && !argv.silent) {
@@ -110,7 +111,7 @@ function listen(port) {
     options = JSON.parse(content);
   }
 
-  var server = xbrokerBroker.createServer(options);
+  var server = xbroker.createServer(options, file);
 
   logger.info([colors.yellow('Starting up X-Broker Server, serving port '),
     colors.cyan(options.socket.port)].join(''));

@@ -8,6 +8,8 @@
  *  @flow
  */
 
+export type XBrokerCommandArg = string|number|boolean|{};
+
 export type XBrokerCommand = {|
   clientAgent: string,
   clientId: string,
@@ -15,24 +17,22 @@ export type XBrokerCommand = {|
   tag: string,
   agent: string,
   cmd: string,
-  args: Array<string | number>,
+  args: Array<XBrokerCommandArg>,
 |};
 
 export type XBrokerResponse = {|
   tag: ?string,
   status: "error",
-  errorMsg: string,
-  command: XBrokerCommand,
+  err: string,
 |} | {|
   tag: ?string,
   status: "error",
-  errorMsg: string,
-  commandStr: string,
+  err: string,
+  cmd: string,
 |} | {|
   tag: string,
   status: "ok",
   result: mixed,
-  command: XBrokerCommand,
 |} | {|
   tag: null,
   status: "message",

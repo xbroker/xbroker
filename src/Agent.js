@@ -36,8 +36,12 @@ export type AgentOptions =
 export interface Agent {
   createResponse(command: XBrokerCommand, err: mixed, res: mixed): XBrokerResponse;
 
+  getType(): AgentType;
+  getName(): string;
+  getOptions(): AgentAllOptions;
+
   dispatchCommand(command: XBrokerCommand): void;
-  dispatchResponse(response: XBrokerResponse): void;
+  dispatchResponse(command: XBrokerCommand, response: XBrokerResponse): void;
   dispatchMessage(clientId: XBrokerClient, channel: string, message: XBrokerResponse): void;
   dispatchPMessage(clientId: XBrokerClient, pattern: string, channel: string, message: XBrokerResponse): void;
 

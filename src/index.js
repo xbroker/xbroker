@@ -11,8 +11,8 @@
 import type { XBrokerOptions } from './XBroker'
 import XBroker from './XBroker'
 
-const createServer = (options: ?XBrokerOptions): XBroker =>
-  new XBroker(options)
+const createServer = (options: XBrokerOptions, optionsFile: string): XBroker =>
+  new XBroker(options, optionsFile)
 
 export {
   createServer

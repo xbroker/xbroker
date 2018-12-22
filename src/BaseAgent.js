@@ -17,15 +17,30 @@ import type { RedisAgentAllOptions, RedisAgentOptions } from './RedisAgent';
 import type { BrokerAgentAllOptions, BrokerAgentOptions } from './BrokerAgent';
 import BrokerAgent from './BrokerAgent';
 
+import EventEmitter from 'events'
+
 import { println } from './Utils';
 
-export default class BaseAgent<T: AgentType, O: AgentAllOptions> implements Agent {
+export default class BaseAgent<T: AgentType, O: AgentAllOptions> extends EventEmitter implements Agent {
   type: T;
   name: string;
   options: O;
   broker: BrokerAgent;
 
+  getType(): AgentType {
+    return this.type;
+  }
+
+  getName(): string {
+    return this.name;
+  }
+  
+  getOptions(): AgentAllOptions { 
+    return this.options;
+  }
+
   constructor(type: T, name: string, options: O, broker: BrokerAgent): void {
+    super()
     this.type = type;
     this.name = name;
     this.options = options;
@@ -37,11 +52,11 @@ export default class BaseAgent<T: AgentType, O: AgentAllOptions> implements Agen
     const tag = command.tag;
     let resp: ?XBrokerResponse;
     if(err) {
-      resp = {tag, status: "error", errorMsg: String(err), command};
+      resp = {tag, status: "error", err: String(err)};
     } else if(result !== undefined && result !== null) {
-      resp = {tag, status: "ok", result, command};
+      resp = {tag, status: "ok", result};
     } else {
-      resp = {tag, status: "error", errorMsg: "Internal error: no result value", command};
+      resp = {tag, status: "error", err: "Internal error: no result value"};
     }
     return resp;
   }
@@ -49,13 +64,13 @@ export default class BaseAgent<T: AgentType, O: AgentAllOptions> implements Agen
   dispatchCommand(command: XBrokerCommand): void {
     const response: XBrokerResponse = this.createResponse(command, null, null);
     if(this.broker) {
-      this.broker.dispatchResponse(response);
+      this.broker.dispatchResponse(command, response);
     }
   }
 
-  dispatchResponse(response: XBrokerResponse): void {
+  dispatchResponse(command: XBrokerCommand, response: XBrokerResponse): void {
     if(this.broker) {
-      this.broker.dispatchResponse(response);
+      this.broker.dispatchResponse(command, response);
     }
   }
 

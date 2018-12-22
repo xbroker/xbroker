@@ -42,16 +42,19 @@ const xBrokerDefaultOptions: XBrokerAllOptions = {
 export default class XBroker {
 
   options: XBrokerOptions
+  optionsFile: ?string
   agents: {[string]: Agent}
 
-  constructor(options: ?XBrokerOptions): void {
+  constructor(options: XBrokerOptions, optionsFile: string): void {
 
     this.agents = {};
 
     if(options) {
       this.options = options;
+      this.optionsFile = optionsFile;
     } else {
       this.options = {};
+      this.optionsFile = null;
     }
 
     let broker: ?BrokerAgent;
@@ -60,7 +63,7 @@ export default class XBroker {
       const agentOptions: AgentOptions = this.options[name];
       switch(agentOptions.type) {
         case 'broker': {
-          const agent: BrokerAgent = new BrokerAgent(name, agentOptions, this.agents);
+          const agent: BrokerAgent = new BrokerAgent(name, agentOptions, this);
           this.agents[name] = agent;
           broker = agent;
           break;

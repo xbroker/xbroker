@@ -9,6 +9,9 @@
  */
 
 import ws from 'ws';
+import https from 'https';
+import fs from 'fs';
+import path from 'path';
 
 import type { XBrokerClient, XBrokerCommand, XBrokerResponse } from './XBrokerTypes';
 
@@ -27,6 +30,10 @@ export type SocketAgentAllOptions = {|
   socketSendInProgressLimit: number,
   socketMonitoringIntervalMs: number,
   port: number,
+  https?: {|
+    cert: string,
+    key: string,
+  |},
   defaultAgent?: string,
 |};  
 
@@ -41,6 +48,10 @@ export type SocketAgentOptions = {|
   socketSendInProgressLimit?: number,
   socketMonitoringIntervalMs?: number,
   port?: number,
+  https?: {|
+    cert: string,
+    key: string,
+  |},
   defaultAgent?: string,
 |};
 
@@ -251,14 +262,12 @@ export default class SocketAgent extends BaseAgent<'socket', SocketAgentAllOptio
     delete this.connections[conn.clientId];
   }
 
-  dispatchResponse(response: XBrokerResponse): void {
+  dispatchResponse(command: XBrokerCommand, response: XBrokerResponse): void {
     const respStr = JSON.stringify(response);
     this.debug("OUT:", respStr);
-    if(response.command) {
-      const conn: SocketAgentConnection = this.connections[response.command.clientId];
-      if(conn) {
-        this.sendResponse(conn, respStr);
-      }
+    const conn: SocketAgentConnection = this.connections[command.clientId];
+    if(conn) {
+      this.sendResponse(conn, respStr);
     }
   }
 
@@ -285,7 +294,7 @@ export default class SocketAgent extends BaseAgent<'socket', SocketAgentAllOptio
     conn.tags[tag] = command;
 
     try {
-      if(!command.agent) {
+      if(!command.agent && command.agent !== "") {
         if(this.options.defaultAgent) {
           command.agent = this.options.defaultAgent;
         } else {
@@ -298,7 +307,7 @@ export default class SocketAgent extends BaseAgent<'socket', SocketAgentAllOptio
         throw "Misconfigured agent, attached to no broker";
       }
     } catch(err) {
-      const resp: XBrokerResponse = {tag, status: "error", errorMsg: err.toString(), command};
+      const resp: XBrokerResponse = {tag, status: "error", err: err.toString()};
       this.sendResponse(conn, JSON.stringify(resp));
     } finally {
       delete conn.tags[tag];
@@ -313,7 +322,7 @@ export default class SocketAgent extends BaseAgent<'socket', SocketAgentAllOptio
     try {
       parsedCommand = JSON.parse(commandStr);
     } catch(err) {
-      resp = {tag: null, status: "error", errorMsg: err.toString(), commandStr: commandStr};
+      resp = {tag: null, status: "error", err: err.toString(), cmd: commandStr};
       this.sendResponse(conn, JSON.stringify(resp));
       return;
     }
@@ -324,19 +333,19 @@ export default class SocketAgent extends BaseAgent<'socket', SocketAgentAllOptio
       const tag: string = command.tag;
 
       if(!tag) {
-        resp = {tag: tag, status: "error", errorMsg: "missing tag", command: command};
+        resp = {tag: tag, status: "error", err: "missing tag"};
       } else if(conn.tags.hasOwnProperty(tag)) {
-        resp = {tag: tag, status: "error", errorMsg: "duplicate tag", command: command};
+        resp = {tag: tag, status: "error", err: "duplicate tag"};
       } else {
         let cmd: string = command.cmd;
         if(!cmd) {
-          resp = {tag: tag, status: "error", errorMsg: "missing command", command: command};
+          resp = {tag: tag, status: "error", err: "missing command"};
         } else {
           this.onParsedCommand(conn, command);
         }
       }
     } catch(err) {
-      resp = {tag: null, status: "error", errorMsg: err.toString(), command: command};
+      resp = {tag: null, status: "error", err: err.toString()};
     } finally {
       if(resp) {
         this.sendResponse(conn, JSON.stringify(resp));
@@ -386,7 +395,28 @@ export default class SocketAgent extends BaseAgent<'socket', SocketAgentAllOptio
     this.clientIdSeq = 1
     this.connections = {}
 
-    this.webSocketServer = new ws.Server({port: this.options.port});
+    if(this.options.https) {
+      const httpsCert = this.options.https.cert;
+      const httpsKey = this.options.https.key;
+
+      var dirname = ".";
+      if(this.broker.xbroker.optionsFile) {
+        dirname = path.dirname(this.broker.xbroker.optionsFile);
+      }
+      
+      const cert = fs.readFileSync(dirname+'/'+httpsCert, 'utf8');
+      const key = fs.readFileSync(dirname+'/'+httpsKey, 'utf8');
+
+      const httpsServer = new https.createServer({
+        cert,
+        key
+      }); 
+      httpsServer.listen(this.options.port);
+
+      this.webSocketServer = new ws.Server({server: httpsServer});
+    } else {
+      this.webSocketServer = new ws.Server({port: this.options.port});
+    }
 
     this.webSocketServer
     .on('connection', (socket: SocketAgentWebSocket) => {

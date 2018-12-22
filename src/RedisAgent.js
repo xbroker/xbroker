@@ -10,7 +10,7 @@
 
 import redis from 'redis';
 
-import type { XBrokerCommand, XBrokerResponse, XBrokerClient, XBrokerCallback } from './XBrokerTypes';
+import type { XBrokerCommand, XBrokerCommandArg, XBrokerResponse, XBrokerClient, XBrokerCallback } from './XBrokerTypes';
 import type BrokerAgent from './BrokerAgent'
 
 import type { Agent } from './Agent'
@@ -47,7 +47,7 @@ export interface RedisConnection {
   unsubscribe(channel: string, callback: XBrokerCallback): void;
   psubscribe(pattern: string, callback: XBrokerCallback): void;
   punsubscribe(pattern: string, callback: XBrokerCallback): void;
-  send_command(command: string, args: Array<string | number>, callback: XBrokerCallback): void;
+  send_command(command: string, args: Array<XBrokerCommandArg>, callback: XBrokerCallback): void;
   quit(): void;
 }
 
@@ -92,7 +92,7 @@ export default class RedisAgent extends SubscriptionBaseAgent<'redis', RedisAgen
     const args = command.args;
     const callback = (err: mixed, res: mixed): void => {
       const resp: XBrokerResponse = this.createResponse(command, err, res);
-      this.dispatchResponse(resp);
+      this.dispatchResponse(command, resp);
     };
 
     try {
