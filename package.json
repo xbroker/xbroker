@@ -9,7 +9,7 @@
     "build:clean": "rimraf dist && rimraf out && rimraf coverage",
     "build:babel": "babel src/ -d dist/",
     "flow": "flow",
-    "lint": "eslint src __tests__",
+    "lint": "eslint src",
     "test": "jest --verbose --coverage",
     "clean": "rimraf out && rimraf coverage",
     "debug": "node --inspect --debug-brk ./node_modules/.bin/jest -i",
@@ -43,26 +43,26 @@
   },
   "homepage": "https://github.com/xbroker/xbroker#readme",
   "dependencies": {
-    "colors": "^1.3.2",
+    "colors": "^1.4.0",
     "https": "^1.0.0",
     "optimist": "^0.6.1",
     "os": "^0.1.1",
-    "portfinder": "^1.0.17",
+    "portfinder": "^1.0.28",
     "redis": "^2.8.0",
-    "ws": "^6.1.0"
+    "ws": "^6.2.1"
   },
   "devDependencies": {
     "babel-cli": "^6.26.0",
-    "babel-eslint": "^10.0.1",
+    "babel-eslint": "^10.1.0",
     "babel-jest": "^23.6.0",
     "babel-plugin-transform-object-rest-spread": "^6.26.0",
     "babel-preset-env": "^1.7.0",
     "babel-preset-flow": "^6.23.0",
-    "eslint": "^5.7.0",
-    "eslint-plugin-flowtype": "^3.0.0",
+    "eslint": "^5.16.0",
+    "eslint-plugin-flowtype": "^3.13.0",
     "flow-bin": "^0.83.0",
     "jest": "^23.6.0",
     "regenerator-runtime": "^0.12.1",
-    "rimraf": "^2.6.2"
+    "rimraf": "^2.7.1"
   }
 }

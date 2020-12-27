@@ -8,10 +8,10 @@
  *  @flow
  */
 
-import type { XBrokerCommand, XBrokerResponse, XBrokerClient } from './XBrokerTypes';
+import type { XBrokerResponse, XBrokerClient } from './XBrokerTypes';
 
 import type BrokerAgent from './BrokerAgent';
-import type { Agent, AgentType, AgentAllOptions } from './Agent'
+import type { AgentType, AgentAllOptions } from './Agent'
 import BaseAgent from './BaseAgent'
 import type { SubscriptionAgent } from './SubscriptionAgent'
 import { isEmpty } from './Utils'

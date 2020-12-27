@@ -14,12 +14,8 @@ import type { XBrokerCommand, XBrokerCommandArg, XBrokerResponse, XBrokerClient,
 import type BrokerAgent from './BrokerAgent'
 
 import type { Agent } from './Agent'
-import BaseAgent from './BaseAgent'
 
-import type { SubscriptionAgent } from './SubscriptionAgent'
 import { SubscriptionBaseAgent } from './SubscriptionBaseAgent'
-
-import { println } from './Utils';
 
 export type RedisAgentAllOptions = {|
   type: 'redis',

@@ -17,6 +17,7 @@ export const println = (... data: Array<mixed>): void => {
 export const isEmpty = (obj: {}): boolean => {
   let empty = true;
 
+  // eslint-disable-next-line no-unused-vars
   for(let field in obj) {
     empty = false;
     break;

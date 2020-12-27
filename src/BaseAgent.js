@@ -10,11 +10,8 @@
 
 import type { XBrokerClient, XBrokerCommand, XBrokerResponse } from './XBrokerTypes';
 
-import type { Agent, AgentType, AgentOptions, AgentAllOptions } from './Agent';
+import type { Agent, AgentType, AgentAllOptions } from './Agent';
 
-import type { SocketAgentAllOptions, SocketAgentOptions } from './SocketAgent';
-import type { RedisAgentAllOptions, RedisAgentOptions } from './RedisAgent';
-import type { BrokerAgentAllOptions, BrokerAgentOptions } from './BrokerAgent';
 import BrokerAgent from './BrokerAgent';
 
 import EventEmitter from 'events'

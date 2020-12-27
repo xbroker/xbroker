@@ -10,8 +10,7 @@
 
 import type { XBrokerClient, XBrokerCommand, XBrokerResponse } from './XBrokerTypes';
 
-import type { Agent, AgentType, AgentOptions, AgentAllOptions } from './Agent';
-import BaseAgent from './BaseAgent'
+import type { Agent, AgentType, AgentAllOptions } from './Agent';
 import XBroker from './XBroker'
 import EventEmitter from 'events'
 
@@ -154,18 +153,22 @@ export default class BrokerAgent extends EventEmitter implements Agent {
     clientAgent.dispatchPMessage(clientId, pattern, channel, message);
   }
 
+  // eslint-disable-next-line no-unused-vars
   subscribe(channel: string, subscriber: Agent): void {
 
   }
 
+  // eslint-disable-next-line no-unused-vars
   unsubscribe(channel: string, subscriber: Agent): void {
 
   }
 
+  // eslint-disable-next-line no-unused-vars
   psubscribe(pattern: string, subscriber: Agent): void {
 
   }
 
+  // eslint-disable-next-line no-unused-vars
   punsubscribe(pattern: string, subscriber: Agent): void {
 
   }

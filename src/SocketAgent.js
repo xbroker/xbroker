@@ -15,7 +15,6 @@ import path from 'path';
 
 import type { XBrokerClient, XBrokerCommand, XBrokerResponse } from './XBrokerTypes';
 
-import type { AgentType, Agent } from "./Agent";
 import BaseAgent from './BaseAgent';
 import type BrokerAgent from "./BrokerAgent";
 
@@ -25,6 +24,7 @@ export type SocketAgentAllOptions = {|
   verbose: boolean,
 
   batchIntervalMs: number,
+  socketQueueItemsLimit: number,
   socketQueueSizeLimit: number,
   socketQueueSizeFlush: number,
   socketSendInProgressLimit: number,
@@ -43,6 +43,7 @@ export type SocketAgentOptions = {|
   verbose?: boolean,
 
   batchIntervalMs?: number,
+  socketQueueItemsLimit: number,
   socketQueueSizeLimit?: number,
   socketQueueSizeFlush?: number,
   socketSendInProgressLimit?: number,
@@ -71,7 +72,7 @@ export interface SocketAgentWebSocket {
 
   ping(() => void): void;
   terminate(): void;
-};
+}
 
 class SocketAgentConnection {
   webSocket: SocketAgentWebSocket;
@@ -109,6 +110,7 @@ export const socketAgentDefaultOptions: SocketAgentAllOptions = {
   verbose: false,
 
   batchIntervalMs: 100,
+  socketQueueItemsLimit: 10, // in UTF-16 characters
   socketQueueSizeLimit: 1*1024*1024, // in UTF-16 characters
   socketQueueSizeFlush: 128*1024, // in UTF-16 characters
   socketSendInProgressLimit: 8,
@@ -201,14 +203,14 @@ export default class SocketAgent extends BaseAgent<'socket', SocketAgentAllOptio
     }
   }
 
-  sendResponse(socket: SocketAgentConnection, msgStr: string): void {
-    socket.responseQueue.push(msgStr);
-    socket.responseQueueSize += msgStr.length;
-    while(socket.responseQueueSize >= this.options.socketQueueSizeLimit) {
+  sendResponse(socket: SocketAgentConnection, msgStr: string, message: XBrokerResponse): void {
+    while(message.tag === null && socket.responseQueueSize >= this.options.socketQueueSizeLimit && socket.responseQueue.length >= this.options.socketQueueItemsLimit) {
       const removedMsgStr = socket.responseQueue.shift();
       socket.responseQueueSize -= removedMsgStr.length;
       socket.responseQueueDiscarded += removedMsgStr.length;
     }
+    socket.responseQueue.push(msgStr);
+    socket.responseQueueSize += msgStr.length;
     if(socket.responseQueueSize >= this.options.socketQueueSizeFlush) {
       if(socket.socketTimer) {
         clearTimeout(socket.socketTimer);
@@ -267,7 +269,7 @@ export default class SocketAgent extends BaseAgent<'socket', SocketAgentAllOptio
     this.debug("OUT:", respStr);
     const conn: SocketAgentConnection = this.connections[command.clientId];
     if(conn) {
-      this.sendResponse(conn, respStr);
+      this.sendResponse(conn, respStr, response);
     }
   }
 
@@ -276,7 +278,7 @@ export default class SocketAgent extends BaseAgent<'socket', SocketAgentAllOptio
     this.debug("MESSAGE:", respStr);
     const conn: SocketAgentConnection = this.connections[clientId.clientId];
     if(conn) {
-      this.sendResponse(conn, respStr);
+      this.sendResponse(conn, respStr, message);
     }
   }
 
@@ -285,7 +287,7 @@ export default class SocketAgent extends BaseAgent<'socket', SocketAgentAllOptio
     this.debug("PMESSAGE:", respStr);
     const conn: SocketAgentConnection = this.connections[clientId.clientId];
     if(conn) {
-      this.sendResponse(conn, respStr);
+      this.sendResponse(conn, respStr, message);
     }
   }
 
@@ -301,6 +303,9 @@ export default class SocketAgent extends BaseAgent<'socket', SocketAgentAllOptio
           throw "Invalid command, missing agent";
         }
       }
+      if(conn.responseQueueSize >= this.options.socketQueueSizeLimit && conn.responseQueue.length >= this.options.socketQueueItemsLimit) {
+        throw "Server is too busy"
+      }
       if(this.broker) {
         this.broker.dispatchCommand(command);
       } else {
@@ -308,7 +313,7 @@ export default class SocketAgent extends BaseAgent<'socket', SocketAgentAllOptio
       }
     } catch(err) {
       const resp: XBrokerResponse = {tag, status: "error", err: err.toString()};
-      this.sendResponse(conn, JSON.stringify(resp));
+      this.sendResponse(conn, JSON.stringify(resp), resp);
     } finally {
       delete conn.tags[tag];
     }
@@ -323,7 +328,7 @@ export default class SocketAgent extends BaseAgent<'socket', SocketAgentAllOptio
       parsedCommand = JSON.parse(commandStr);
     } catch(err) {
       resp = {tag: null, status: "error", err: err.toString(), cmd: commandStr};
-      this.sendResponse(conn, JSON.stringify(resp));
+      this.sendResponse(conn, JSON.stringify(resp), resp);
       return;
     }
 
@@ -348,7 +353,7 @@ export default class SocketAgent extends BaseAgent<'socket', SocketAgentAllOptio
       resp = {tag: null, status: "error", err: err.toString()};
     } finally {
       if(resp) {
-        this.sendResponse(conn, JSON.stringify(resp));
+        this.sendResponse(conn, JSON.stringify(resp), resp);
       }
     }
   }
@@ -358,7 +363,7 @@ export default class SocketAgent extends BaseAgent<'socket', SocketAgentAllOptio
       for(let id: string in this.connections) {
         const conn: SocketAgentConnection = this.connections[id];
         f(conn);
-      };
+      }
     } catch(ex) {
       this.fail(ex);
     }

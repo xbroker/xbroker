@@ -13,16 +13,8 @@ import type { Agent, AgentOptions, AgentAllOptions } from './Agent';
 import { println } from './Utils';
 
 import SocketAgent from './SocketAgent';
-import type { SocketAgentAllOptions, SocketAgentOptions } from './SocketAgent';
-import { socketAgentDefaultOptions } from './SocketAgent';
-
 import RedisAgent from './RedisAgent';
-import type { RedisAgentAllOptions, RedisAgentOptions } from './RedisAgent';
-import { redisAgentDefaultOptions } from './RedisAgent';
-
 import BrokerAgent from './BrokerAgent';
-import type { BrokerAgentAllOptions, BrokerAgentOptions } from './BrokerAgent';
-import { BrokerAgentDefaultOptions } from './BrokerAgent';
 
 
 export type XBrokerAllOptions = {
@@ -31,12 +23,6 @@ export type XBrokerAllOptions = {
 
 export type XBrokerOptions = {
   [string]: AgentOptions
-};
-
-const xBrokerDefaultOptions: XBrokerAllOptions = {
-  broker: BrokerAgentDefaultOptions,
-  socket: socketAgentDefaultOptions,
-  redis: redisAgentDefaultOptions,
 };
 
 export default class XBroker {

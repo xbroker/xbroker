@@ -8,13 +8,11 @@
  *  @flow
  */
 
-import type { 
-  XBrokerClient, XBrokerCommand, XBrokerResponse } from './XBrokerTypes';
+import type { XBrokerClient, XBrokerCommand, XBrokerResponse } from './XBrokerTypes';
 
 import type { SocketAgentAllOptions, SocketAgentOptions } from './SocketAgent';
 import type { RedisAgentAllOptions, RedisAgentOptions } from './RedisAgent';
 import type { BrokerAgentAllOptions, BrokerAgentOptions } from './BrokerAgent';
-import type BrokerAgent from './BrokerAgent';
 
 export type AgentType = 
   'broker' |

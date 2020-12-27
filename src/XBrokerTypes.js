@@ -8,7 +8,7 @@
  *  @flow
  */
 
-export type XBrokerCommandArg = string|number|boolean|{};
+export type XBrokerCommandArg = string | number | boolean | {};
 
 export type XBrokerCommand = {|
   clientAgent: string,
