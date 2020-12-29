@@ -339,7 +339,7 @@ export default class SocketAgent extends BaseAgent<'socket', SocketAgentAllOptio
 
       if(!tag) {
         resp = {tag: tag, status: "error", err: "missing tag"};
-      } else if(conn.tags.hasOwnProperty(tag)) {
+      } else if(conn.tags[tag]) {
         resp = {tag: tag, status: "error", err: "duplicate tag"};
       } else {
         let cmd: string = command.cmd;
@@ -397,6 +397,26 @@ export default class SocketAgent extends BaseAgent<'socket', SocketAgentAllOptio
   }
 
   start(): void {
+    const perMessageDeflate = {
+      zlibDeflateOptions: {
+        // See zlib defaults.
+        chunkSize: 1024,
+        memLevel: 7,
+        level: 3
+      },
+      zlibInflateOptions: {
+        chunkSize: 5 * 1024
+      },
+      // Other options settable:
+      clientNoContextTakeover: true, // Defaults to negotiated value.
+      serverNoContextTakeover: true, // Defaults to negotiated value.
+      serverMaxWindowBits: 10, // Defaults to negotiated value.
+      // Below options specified as default values.
+      concurrencyLimit: 4, // Limits zlib concurrency for perf.
+      threshold: 1024 // Size (in bytes) below which messages
+      // should not be compressed.
+    }
+
     this.clientIdSeq = 1
     this.connections = {}
 
@@ -418,9 +438,9 @@ export default class SocketAgent extends BaseAgent<'socket', SocketAgentAllOptio
       }); 
       httpsServer.listen(this.options.port);
 
-      this.webSocketServer = new ws.Server({server: httpsServer});
+      this.webSocketServer = new ws.Server({server: httpsServer, perMessageDeflate});
     } else {
-      this.webSocketServer = new ws.Server({port: this.options.port});
+      this.webSocketServer = new ws.Server({port: this.options.port, perMessageDeflate});
     }
 
     this.webSocketServer

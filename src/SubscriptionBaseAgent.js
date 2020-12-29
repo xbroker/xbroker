@@ -45,11 +45,11 @@ export class SubscriptionBaseAgent<T: AgentType, O: AgentAllOptions> extends Bas
 
   subscribe(channel: string, client: XBrokerClient): boolean {
     let newChannel = false;
-    if(this.channelSubscriptions.hasOwnProperty(channel)) {
+    if(this.channelSubscriptions[channel]) {
       const s2xbc: S2XBC = this.channelSubscriptions[channel];
-      if(s2xbc.hasOwnProperty(client.clientAgent)) {
+      if(s2xbc[client.clientAgent]) {
         const s1xbc: S1XBC = s2xbc[client.clientAgent];
-        if(s1xbc.hasOwnProperty(client.clientId)) {
+        if(s1xbc[client.clientId]) {
           throw new Error("The channel: "+channel+" has already been subscribed by this client: "+client.clientAgent+", "+client.clientId);
         } else {
           s1xbc[client.clientId] = client;
@@ -68,11 +68,11 @@ export class SubscriptionBaseAgent<T: AgentType, O: AgentAllOptions> extends Bas
       this.channelSubscriptions[channel] = s2xbc;
     }
 
-    if(this.clientsChannels.hasOwnProperty(client.clientAgent)) {
+    if(this.clientsChannels[client.clientAgent]) {
       const s2xbc: S2XBC = this.clientsChannels[client.clientAgent];
-      if(s2xbc.hasOwnProperty(client.clientId)) {
+      if(s2xbc[client.clientId]) {
         const s1xbc: S1XBC = s2xbc[client.clientId];
-        if(s1xbc.hasOwnProperty(channel)) {
+        if(s1xbc[channel]) {
           throw new Error("The channel: "+channel+" has already been subscribed by this client: "+client.clientAgent+", "+client.clientId);
         } else {
           s1xbc[channel] = client;
@@ -95,11 +95,11 @@ export class SubscriptionBaseAgent<T: AgentType, O: AgentAllOptions> extends Bas
 
   psubscribe(pattern: string, client: XBrokerClient): boolean {
     let newPattern = false;
-    if(this.patternSubscriptions.hasOwnProperty(pattern)) {
+    if(this.patternSubscriptions[pattern]) {
       const s2xbc: S2XBC = this.patternSubscriptions[pattern];
-      if(s2xbc.hasOwnProperty(client.clientAgent)) {
+      if(s2xbc[client.clientAgent]) {
         const s1xbc: S1XBC = s2xbc[client.clientAgent];
-        if(s1xbc.hasOwnProperty(client.clientId)) {
+        if(s1xbc[client.clientId]) {
           throw new Error("The pattern: "+pattern+" has already been subscribed by this client: "+client.clientAgent+", "+client.clientId);
         } else {
           s1xbc[client.clientId] = client;
@@ -118,11 +118,11 @@ export class SubscriptionBaseAgent<T: AgentType, O: AgentAllOptions> extends Bas
       this.patternSubscriptions[pattern] = s2xbc;
     }
 
-    if(this.clientsPatterns.hasOwnProperty(client.clientAgent)) {
+    if(this.clientsPatterns[client.clientAgent]) {
       const s2xbc: S2XBC = this.clientsPatterns[client.clientAgent];
-      if(s2xbc.hasOwnProperty(client.clientId)) {
+      if(s2xbc[client.clientId]) {
         const s1xbc: S1XBC = s2xbc[client.clientId];
-        if(s1xbc.hasOwnProperty(pattern)) {
+        if(s1xbc[pattern]) {
           throw new Error("The pattern: "+pattern+" has already been subscribed by this client: "+client.clientAgent+", "+client.clientId);
         } else {
           s1xbc[pattern] = client;
@@ -145,11 +145,11 @@ export class SubscriptionBaseAgent<T: AgentType, O: AgentAllOptions> extends Bas
 
   unsubscribe(channel: string, client: XBrokerClient): boolean {
     let deadChannel = false;
-    if(this.channelSubscriptions.hasOwnProperty(channel)) {
+    if(this.channelSubscriptions[channel]) {
       const s2xbc: S2XBC = this.channelSubscriptions[channel];
-      if(s2xbc.hasOwnProperty(client.clientAgent)) {
+      if(s2xbc[client.clientAgent]) {
         const s1xbc: S1XBC = s2xbc[client.clientAgent];
-        if(s1xbc.hasOwnProperty(client.clientId)) {
+        if(s1xbc[client.clientId]) {
           delete s1xbc[client.clientId];
           if(isEmpty(s1xbc)) {
             delete s2xbc[client.clientAgent];
@@ -168,11 +168,11 @@ export class SubscriptionBaseAgent<T: AgentType, O: AgentAllOptions> extends Bas
       throw new Error("The channel: "+channel+" has not been subscribed");
     }
 
-    if(this.clientsChannels.hasOwnProperty(client.clientAgent)) {
+    if(this.clientsChannels[client.clientAgent]) {
       const s2xbc: S2XBC = this.clientsChannels[client.clientAgent];
-      if(s2xbc.hasOwnProperty(client.clientId)) {
+      if(s2xbc[client.clientId]) {
         const s1xbc: S1XBC = s2xbc[client.clientId];
-        if(s1xbc.hasOwnProperty(channel)) {
+        if(s1xbc[channel]) {
           delete s1xbc[channel];
           if(isEmpty(s1xbc)) {
             delete s2xbc[client.clientId];
@@ -196,11 +196,11 @@ export class SubscriptionBaseAgent<T: AgentType, O: AgentAllOptions> extends Bas
 
   punsubscribe(pattern: string, client: XBrokerClient): boolean {
     let deadPattern = false;
-    if(this.patternSubscriptions.hasOwnProperty(pattern)) {
+    if(this.patternSubscriptions[pattern]) {
       const s2xbc: S2XBC = this.patternSubscriptions[pattern];
-      if(s2xbc.hasOwnProperty(client.clientAgent)) {
+      if(s2xbc[client.clientAgent]) {
         const s1xbc: S1XBC = s2xbc[client.clientAgent];
-        if(s1xbc.hasOwnProperty(client.clientId)) {
+        if(s1xbc[client.clientId]) {
           delete s1xbc[client.clientId];
           if(isEmpty(s1xbc)) {
             delete s2xbc[client.clientAgent];
@@ -219,11 +219,11 @@ export class SubscriptionBaseAgent<T: AgentType, O: AgentAllOptions> extends Bas
       throw new Error("The pattern: "+pattern+" has not been subscribed");
     }
 
-    if(this.clientsPatterns.hasOwnProperty(client.clientAgent)) {
+    if(this.clientsPatterns[client.clientAgent]) {
       const s2xbc: S2XBC = this.clientsPatterns[client.clientAgent];
-      if(s2xbc.hasOwnProperty(client.clientId)) {
+      if(s2xbc[client.clientId]) {
         const s1xbc: S1XBC = s2xbc[client.clientId];
-        if(s1xbc.hasOwnProperty(pattern)) {
+        if(s1xbc[pattern]) {
           delete s1xbc[pattern];
           if(isEmpty(s1xbc)) {
             delete s2xbc[client.clientId];
@@ -247,7 +247,7 @@ export class SubscriptionBaseAgent<T: AgentType, O: AgentAllOptions> extends Bas
 
   onMessage(channel: string, message: string): void {
     this.debug("MESSAGE", channel, message);
-    if(this.channelSubscriptions.hasOwnProperty(channel)) {
+    if(this.channelSubscriptions[channel]) {
       let resp: XBrokerResponse = {tag: null, status: "message", channel: channel, message: message};
       const s2xbc: S2XBC = this.channelSubscriptions[channel];
       if(s2xbc) {
@@ -264,7 +264,7 @@ export class SubscriptionBaseAgent<T: AgentType, O: AgentAllOptions> extends Bas
 
   onPMessage(pattern: string, channel: string, message: string): void {
     this.debug("PMESSAGE", pattern, channel, message);
-    if(this.patternSubscriptions.hasOwnProperty(pattern)) {
+    if(this.patternSubscriptions[pattern]) {
       let resp: XBrokerResponse = {tag: null, status: "pmessage", pattern: pattern, channel: channel, message: message};
       const s2xbc: S2XBC = this.patternSubscriptions[pattern];
       if(s2xbc) {
@@ -280,9 +280,9 @@ export class SubscriptionBaseAgent<T: AgentType, O: AgentAllOptions> extends Bas
   }
 
   removeClient(clientId: XBrokerClient) {
-    if(this.clientsChannels.hasOwnProperty(clientId.clientAgent)) {
+    if(this.clientsChannels[clientId.clientAgent]) {
       const s2xbc: S2XBC = this.clientsChannels[clientId.clientAgent];
-      if(s2xbc.hasOwnProperty(clientId.clientId)) {
+      if(s2xbc[clientId.clientId]) {
         const s1xbc: S1XBC = s2xbc[clientId.clientAgent];
         const channels: Array<string> = Object.keys(s1xbc);
         for(let i = 0; i < channels.length; i++) {
@@ -296,9 +296,9 @@ export class SubscriptionBaseAgent<T: AgentType, O: AgentAllOptions> extends Bas
       }
     }
 
-    if(this.clientsPatterns.hasOwnProperty(clientId.clientAgent)) {
+    if(this.clientsPatterns[clientId.clientAgent]) {
       const s2xbc: S2XBC = this.clientsPatterns[clientId.clientAgent];
-      if(s2xbc.hasOwnProperty(clientId.clientId)) {
+      if(s2xbc[clientId.clientId]) {
         const s1xbc: S1XBC = s2xbc[clientId.clientAgent];
         const patterns: Array<string> = Object.keys(s1xbc);
         for(let i = 0; i < patterns.length; i++) {
