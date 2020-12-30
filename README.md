@@ -1,4 +1,4 @@
-![X-Broker](http://xbroker.github.io/xbroker/xbroker.svg)
+![XBroker](http://xbroker.github.io/xbroker/xbroker.svg)
 =====
 [![npm version](https://badge.fury.io/js/xbroker.svg)](https://badge.fury.io/js/xbroker)
 [![jest](https://img.shields.io/badge/tested_with-jest-brightgreen.svg)](https://facebook.github.io/jest/)
@@ -120,6 +120,28 @@ npm run all
 Update Dependencies:
 ```shell
 npm update --save
+```
+
+Testing with Client
+-------------------
+
+The xbroker-client jest suite tries to connect to wss://localhost:3588
+You need to start a redis service and a xbroker service on port 3588.
+
+First option is to start a redis service in docker container and xbroker server from the command line:
+```shell
+# Start a redis container
+./redis-dev-test/setup.sh
+# Build xbroker
+npm run all
+# Start the xbroker server
+npm run start -- -f ./redis-dev-test/xbroker-redis-ssl.conf
+```
+
+Second option is to start both a redis service and a xbroker server in a separate docker stack:
+```shell
+# Start a redis container
+./xbroker-dev-test/setup.sh
 ```
 
 License

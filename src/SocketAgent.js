@@ -9,9 +9,11 @@
  */
 
 import ws from 'ws';
+import http from 'http';
 import https from 'https';
 import fs from 'fs';
 import path from 'path';
+import jwt from 'jsonwebtoken';
 
 import type { XBrokerClient, XBrokerCommand, XBrokerResponse } from './XBrokerTypes';
 
@@ -20,6 +22,8 @@ import type BrokerAgent from "./BrokerAgent";
 
 export type SocketAgentAllOptions = {|
   type: 'socket',
+  username: string,
+  password: string,
   debug: boolean,
   verbose: boolean,
 
@@ -39,6 +43,8 @@ export type SocketAgentAllOptions = {|
 
 export type SocketAgentOptions = {|
   type: 'socket',
+  username: string,
+  password: string,
   debug?: boolean,
   verbose?: boolean,
 
@@ -99,13 +105,17 @@ export type SocketAgentConnections = {[string]: SocketAgentConnection};
 
 export interface SocketAgentWebSocketServer {
   clients: Array<WebSocket>;
-  on(msg: string, (... data: Array<mixed>) => void): SocketAgentWebSocketServer;
+  emit('connection', ws: SocketAgentWebSocket): void;
   on('connection', socket: SocketAgentWebSocket): SocketAgentWebSocketServer;
+  on(msg: string, (... data: Array<mixed>) => void): SocketAgentWebSocketServer;
+  handleUpgrade(request: mixed, socket: mixed, head: mixed, done: (ws: SocketAgentWebSocket) => void): void;
   close(): void;
 }
 
 export const socketAgentDefaultOptions: SocketAgentAllOptions = {
   type: 'socket',
+  username: 'xbroker',
+  password: 'xbroker',
   debug: false,
   verbose: false,
 
@@ -397,6 +407,7 @@ export default class SocketAgent extends BaseAgent<'socket', SocketAgentAllOptio
   }
 
   start(): void {
+    const self = this
     const perMessageDeflate = {
       zlibDeflateOptions: {
         // See zlib defaults.
@@ -420,6 +431,7 @@ export default class SocketAgent extends BaseAgent<'socket', SocketAgentAllOptio
     this.clientIdSeq = 1
     this.connections = {}
 
+    let server
     if(this.options.https) {
       const httpsCert = this.options.https.cert;
       const httpsKey = this.options.https.key;
@@ -432,19 +444,67 @@ export default class SocketAgent extends BaseAgent<'socket', SocketAgentAllOptio
       const cert = fs.readFileSync(dirname+'/'+httpsCert, 'utf8');
       const key = fs.readFileSync(dirname+'/'+httpsKey, 'utf8');
 
-      const httpsServer = new https.createServer({
+      server = new https.createServer({
         cert,
         key
       }); 
-      httpsServer.listen(this.options.port);
 
-      this.webSocketServer = new ws.Server({server: httpsServer, perMessageDeflate});
+      this.webSocketServer = new ws.Server({noServer: true, perMessageDeflate});
     } else {
-      this.webSocketServer = new ws.Server({port: this.options.port, perMessageDeflate});
+      server = http.createServer()
+      this.webSocketServer = new ws.Server({noServer: true, perMessageDeflate});
     }
 
+    const authenticate = (request, callback) => {
+      const headers = request.headers
+      if(!headers) {
+        callback("Missing headers")
+        return
+      }
+      const authorization = headers.authorization
+      if(!authorization) {
+        callback("Missing authorization")
+        return
+      }
+      if(!authorization.startsWith("Bearer ")) {
+        callback("Missing Bearer prefix")
+        return
+      }
+      const token = authorization.substring(7)
+      if(!token) {
+        callback("Empty token")
+        return
+      }
+      jwt.verify(token, 'secret-key:'+self.options.password, function(err, decoded) {
+        callback(err, decoded)
+      })      
+    }
+
+    const upgrade = (request, socket, head) => {
+      authenticate(request, (err, decoded) => {
+        if(err) {
+          self.info("authenticate:", "error:", err)
+        } else {
+          self.info("authenticate:", "username:", decoded && decoded.username)
+        }
+
+        if (err || !decoded || !decoded.username || !decoded.username === this.options.username) {
+          socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
+          socket.destroy();
+          return;
+        }
+
+        const done = (ws: SocketAgentWebSocket) => {
+          self.webSocketServer.emit('connection', ws) // , request, client);
+        }
+        self.webSocketServer.handleUpgrade(request, socket, head, done);
+      });
+    }
+    server.on('upgrade', upgrade);
+    server.listen(this.options.port);
+
     this.webSocketServer
-    .on('connection', (socket: SocketAgentWebSocket) => {
+    .on('connection', (socket: any) => {
       this.setupConnection(socket);
     })
     .on('error', (err: mixed) => {

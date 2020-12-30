@@ -1,0 +1,10 @@
+version: '3.8'
+
+services:
+
+    redis:
+        image: redis
+        command: redis-server --appendonly yes --requirepass xbroker
+        ports:
+        - "6379:6379"
+        restart: unless-stopped

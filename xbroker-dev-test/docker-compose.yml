@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+
+    redis:
+        image: redis
+        command: redis-server --appendonly yes --requirepass xbroker
+        restart: unless-stopped
+
+    xbroker:
+        image: node
+        user: node
+        working_dir: /home/node
+        volumes:
+        - "..:/home/node:ro"
+        command: npm run start -- -f ./xbroker-dev-test/xbroker-redis-ssl.conf
+        # command: npm run start -- -f ./xbroker-dev-test/xbroker-redis.conf
+        ports:
+        - "3588:3588"
+        restart: unless-stopped
+        depends_on:
+        - redis
+        environment:
+        - NODE_ENV=production
