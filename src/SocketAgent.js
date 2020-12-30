@@ -461,19 +461,29 @@ export default class SocketAgent extends BaseAgent<'socket', SocketAgentAllOptio
         callback("Missing headers")
         return
       }
-      const authorization = headers.authorization
-      if(!authorization) {
-        callback("Missing authorization")
-        return
-      }
-      if(!authorization.startsWith("Bearer ")) {
-        callback("Missing Bearer prefix")
-        return
-      }
-      const token = authorization.substring(7)
-      if(!token) {
-        callback("Empty token")
-        return
+      let token
+      const protocols = headers["sec-websocket-protocol"]
+      if(protocols) {
+        if(!protocols.startsWith("wss, ")) {
+          callback("Invalid sec-websocket-protocol header format")
+          return
+        }
+        token = protocols.substring(5)
+        if(!token) {
+          callback("Empty token")
+          return
+        }
+      } else {
+        const authorization = headers.authorization
+        if(!authorization) {
+          callback("Missing authorization")
+          return
+        }
+        if(!authorization.startsWith("Bearer ")) {
+          callback("Missing Bearer prefix")
+          return
+        }
+        token = authorization.substring(7)
       }
       jwt.verify(token, 'secret-key:'+self.options.password, function(err, decoded) {
         callback(err, decoded)
