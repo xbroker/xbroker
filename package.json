@@ -1,6 +1,6 @@
 {
   "name": "xbroker",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "Simple web-socket server that connects any web browser to microservices like KV store, mongo, redis",
   "main": "dist/index.js",
   "scripts": {
