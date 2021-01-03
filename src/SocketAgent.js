@@ -14,16 +14,21 @@ import https from 'https';
 import fs from 'fs';
 import path from 'path';
 import jwt from 'jsonwebtoken';
+import { decodeBase64 } from './EncodePassword';
 
 import type { XBrokerClient, XBrokerCommand, XBrokerResponse } from './XBrokerTypes';
 
 import BaseAgent from './BaseAgent';
 import type BrokerAgent from "./BrokerAgent";
 
-export type SocketAgentAllOptions = {|
-  type: 'socket',
+type UserRecord = {|
   username: string,
   password: string,
+|};
+
+export type SocketAgentAllOptions = {|
+  type: 'socket',
+  users: Array<UserRecord>,
   debug: boolean,
   verbose: boolean,
 
@@ -43,8 +48,7 @@ export type SocketAgentAllOptions = {|
 
 export type SocketAgentOptions = {|
   type: 'socket',
-  username: string,
-  password: string,
+  users?: Array<UserRecord>,
   debug?: boolean,
   verbose?: boolean,
 
@@ -114,8 +118,12 @@ export interface SocketAgentWebSocketServer {
 
 export const socketAgentDefaultOptions: SocketAgentAllOptions = {
   type: 'socket',
-  username: 'xbroker',
-  password: 'xbroker',
+  users: [
+    {
+      username: 'xbroker',
+      password: 'xbroker',
+    }
+  ],
   debug: false,
   verbose: false,
 
@@ -431,6 +439,19 @@ export default class SocketAgent extends BaseAgent<'socket', SocketAgentAllOptio
     this.clientIdSeq = 1
     this.connections = {}
 
+    const users = {}
+    this.options.users.forEach((ur: UserRecord) => {
+      if(!ur.username || !ur.password) {
+        throw new Error("Incomplete user record: "+JSON.stringify(ur))
+      }
+      if(users[ur.username]) {
+        throw new Error("Duplicate username: "+ur.username)
+      }
+      users[ur.username] = {
+        username: ur.username,
+        password: ur.password,
+      }
+    })
     let server
     if(this.options.https) {
       const httpsCert = this.options.https.cert;
@@ -485,7 +506,13 @@ export default class SocketAgent extends BaseAgent<'socket', SocketAgentAllOptio
         }
         token = authorization.substring(7)
       }
-      jwt.verify(token, 'secret-key:'+self.options.password, function(err, decoded) {
+      const decoded = jwt.decode(token)
+      const ur = users[decoded.username]
+      if(!ur) {
+        callback("Authentication failed")
+        return
+      }
+      jwt.verify(token, 'secret-key:'+decodeBase64(ur.password), function(err, decoded) {
         callback(err, decoded)
       })      
     }
@@ -498,7 +525,7 @@ export default class SocketAgent extends BaseAgent<'socket', SocketAgentAllOptio
           self.info("authenticate:", "username:", decoded && decoded.username)
         }
 
-        if (err || !decoded || !decoded.username || !decoded.username === this.options.username) {
+        if (err || !decoded || !decoded.username || !users[decoded.username]) {
           socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
           socket.destroy();
           return;

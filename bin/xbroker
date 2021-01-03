@@ -18,6 +18,7 @@ if (argv.h || argv.help) {
     '  -s --silent  suppress log messages from output',
     '  -U --utc     use UTC time format in log messages',
     '',
+    '  -E --encode  reads a password string and prints its encoded form',
     '  -h --help    print this list and exit',
     '',
     'If the configuration file is not specified,',
@@ -40,6 +41,7 @@ var file = argv.f || argv.file,
     debug = argv.d || argv.debug || false,
     verbose = argv.v || argv.verbose || false,
     utc = argv.U || argv.utc || false,
+    encodePassword = argv.E || argv.encode || false,
     logger;
 
 if (!argv.s && !argv.silent) {
@@ -70,14 +72,15 @@ else if (colors) {
   };
 }
 
-if (!port) {
+if (encodePassword) {
+  xbroker.encodePassword();
+} else if (!port) {
   portfinder.basePort = 3500;
   portfinder.getPort(function (err, port) {
     if (err) { throw err; }
     listen(port);
   });
-}
-else {
+} else {
   listen(port);
 }
 
